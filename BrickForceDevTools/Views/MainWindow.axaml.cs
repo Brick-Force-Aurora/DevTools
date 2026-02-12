@@ -18,6 +18,8 @@ using System.Text.Json;
 using System.Text;
 using Tmds.DBus.Protocol;
 using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 
 namespace BrickForceDevTools.Views
 {
@@ -44,6 +46,17 @@ namespace BrickForceDevTools.Views
                 Global.PrintLine("Could not load bricks.json: " + Path.GetFullPath(".\\Assets\\bricks.json"));
             }
             LoadSettings();
+
+            Global.RegMapCountChanged += count =>
+            {
+                Dispatcher.UIThread.Post(() =>
+                {
+                    TxtRegMapCount.Text = $"Loaded: {count}";
+                });
+            };
+
+            // initialize label
+            TxtRegMapCount.Text = $"Loaded: {Global.RegMapCount}";
         }
 
         private void LoadSettings()
@@ -99,37 +112,91 @@ namespace BrickForceDevTools.Views
         {
             var files = await this.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Select a RegMap file",
-                AllowMultiple = false,
-                FileTypeFilter = new[] { new FilePickerFileType("RegMap Files") { Patterns = new[] { "*.regmap" } } }
+                Title = "Select RegMap file(s)",
+                AllowMultiple = true,
+                FileTypeFilter = new[]
+                {
+            new FilePickerFileType("RegMap Files") { Patterns = new[] { "*.regmap" } }
+        }
             });
 
-            if (files.Count > 0)
+            if (files.Count == 0)
+                return;
+
+            _viewModel.RegMapsViewModel.RegMaps.Clear();
+            Global.ResetRegMapCount();
+
+            // Convert once to local paths (avoid touching picker objects in background)
+            var filePaths = files.Select(f => f.Path.LocalPath).ToList();
+
+            await Task.Run(() =>
             {
-                var filePath = files[0].Path.LocalPath;
-                LoadRegMap(filePath);
-            }
+                foreach (var filePath in filePaths)
+                {
+                    var geometryPath = filePath.Replace("regmap", "geometry");
+
+                    if (Global.SkipMissingGeometry && !File.Exists(geometryPath))
+                    {
+                        Global.PrintLine($"Missing Geometry File: {Path.GetFileName(geometryPath)}");
+                        continue;
+                    }
+
+                    var regMap = RegMapManager.Load(filePath);
+
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        _viewModel.RegMapsViewModel.RegMaps.Add(regMap);
+                    });
+
+                    Global.IncrementRegMapCount();
+                }
+            });
         }
 
         private async void OnLoadFolderClick(object sender, RoutedEventArgs e)
         {
             var folders = await this.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "Select Folder Containing RegMap Files",
-                AllowMultiple = false
+                Title = "Select folder(s) containing RegMap files",
+                AllowMultiple = true
             });
 
-            if (folders.Count > 0)
+            if (folders.Count == 0)
+                return;
+
+            _viewModel.RegMapsViewModel.RegMaps.Clear();
+            Global.ResetRegMapCount();
+
+            // Convert once to local paths
+            var folderPaths = folders.Select(f => f.Path.LocalPath).ToList();
+
+            await Task.Run(() =>
             {
-                var folderPath = folders[0].Path.LocalPath;
-                var files = Directory.GetFiles(folderPath, "*.regmap");
-                _viewModel.RegMapsViewModel.RegMaps.Clear();
-                foreach (var file in files)
+                foreach (var folderPath in folderPaths)
                 {
-                    LoadRegMap(file);
+                    foreach (var filePath in Directory.EnumerateFiles(folderPath, "*.regmap"))
+                    {
+                        var geometryPath = filePath.Replace("regmap", "geometry");
+
+                        if (Global.SkipMissingGeometry && !File.Exists(geometryPath))
+                        {
+                            Global.PrintLine($"Missing Geometry File: {Path.GetFileName(geometryPath)}");
+                            continue;
+                        }
+
+                        var regMap = RegMapManager.Load(filePath);
+
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            _viewModel.RegMapsViewModel.RegMaps.Add(regMap);
+                        });
+
+                        Global.IncrementRegMapCount();
+                    }
                 }
-            }
+            });
         }
+
 
         private async void OnRegMapSelected(object? sender, SelectionChangedEventArgs e)
         {

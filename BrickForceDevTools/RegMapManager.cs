@@ -21,7 +21,8 @@ namespace BrickForceDevTools
             //Skip file if the corresponding geometry file is missing (recommended usage)
             if (Global.SkipMissingGeometry && !File.Exists(fileName2))
             {
-                return regMap;
+                Global.PrintLine($"Missing Geometry File: {Path.GetFileName(fileName2)}");
+                return null;
             }
 
             //.regmap file parsing
