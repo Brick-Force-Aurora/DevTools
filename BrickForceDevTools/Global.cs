@@ -16,6 +16,7 @@ namespace BrickForceDevTools
         public static bool DefaultExportJson = true;
         public static bool DefaultExportObj = true;
         public static bool DefaultExportPlaintext = true;
+        public static bool IncludeAssemblyLineInPatchInfo = false;
 
         private static int _regMapCount;
         public static int RegMapCount => Volatile.Read(ref _regMapCount);

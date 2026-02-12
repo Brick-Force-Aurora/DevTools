@@ -20,6 +20,7 @@ using Tmds.DBus.Protocol;
 using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using BrickForceDevTools.Patch;
 
 namespace BrickForceDevTools.Views
 {
@@ -28,6 +29,9 @@ namespace BrickForceDevTools.Views
         private readonly MainWindowViewModel _viewModel;
 
         private readonly char crypt = 'E';
+
+        private readonly PatchBuilderViewModel _patchVm = PatchBuilderViewModel.Instance;
+        private System.Collections.Generic.List<PatchBuilder.DiffEntry> _currentDiff = new();
 
         public MainWindow()
         {
@@ -454,6 +458,83 @@ namespace BrickForceDevTools.Views
                 fileStream.Close();
             }
             Global.PrintLine($"Saved Cooked file: {pathName}");
+        }
+
+        private async void OnSelectFoldersForPatchClick(object? sender, RoutedEventArgs e)
+        {
+            // Pick A
+            var a = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select Folder A (baseline)",
+                AllowMultiple = false
+            });
+            if (a.Count == 0) return;
+
+            // Pick B
+            var b = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select Folder B (new)",
+                AllowMultiple = false
+            });
+            if (b.Count == 0) return;
+
+            var folderA = a[0].Path.LocalPath;
+            var folderB = b[0].Path.LocalPath;
+
+            _patchVm.FolderA = folderA;
+            _patchVm.FolderB = folderB;
+            _patchVm.Summary = "Computing diff…";
+            _patchVm.CanBuildPatch = false;
+            _patchVm.DiffItems.Clear();
+
+            // Compute diff off UI thread
+            _currentDiff = await Task.Run(() =>
+                PatchBuilder.ComputeDiff(folderA, folderB, Global.SkipMissingGeometry, Global.PrintLine)
+            );
+
+            // Fill grid
+            foreach (var d in _currentDiff)
+            {
+                _patchVm.DiffItems.Add(new PatchDiffItem
+                {
+                    BaseName = d.BaseName,
+                    MapName = d.MapName,
+                    Creator = d.Creator,
+                    HasGeometry = d.HasGeometry,
+                    RegMapFile = Path.GetFileName(d.RegMapPath),
+                    GeometryFile = d.HasGeometry ? Path.GetFileName(d.GeometryPath) : ""
+                });
+            }
+
+            _patchVm.Summary = $"New maps in B not in A: {_currentDiff.Count}";
+            _patchVm.CanBuildPatch = _currentDiff.Count > 0;
+        }
+
+        private async void OnBuildPatchClick(object? sender, RoutedEventArgs e)
+        {
+            if (_currentDiff == null || _currentDiff.Count == 0)
+            {
+                Global.PrintLine("[Patch] No diff computed.");
+                return;
+            }
+
+            var outFolderPick = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select output folder for patch",
+                AllowMultiple = false
+            });
+            if (outFolderPick.Count == 0) return;
+
+            var outFolder = outFolderPick[0].Path.LocalPath;
+
+            _patchVm.Summary = "Building patch…";
+
+            await Task.Run(() =>
+            {
+                PatchBuilder.BuildPatchOutput(_currentDiff, outFolder, Global.PrintLine);
+            });
+
+            _patchVm.Summary = $"Patch built into: {outFolder}";
         }
     }
 }

@@ -15,6 +15,8 @@ namespace BrickForceDevTools.ViewModels
     public partial class MainWindowViewModel : ViewModelBase
     {
         public RegMapsViewModel RegMapsViewModel { get; } = RegMapsViewModel.Instance;
+        public PatchBuilderViewModel PatchBuilder => PatchBuilderViewModel.Instance;
+
 
         private RegMap _selectedRegMap;
         public RegMap SelectedRegMap
@@ -52,6 +54,7 @@ namespace BrickForceDevTools.ViewModels
         [ObservableProperty] private bool defaultExportJson = true;
         [ObservableProperty] private bool defaultExportObj = true;
         [ObservableProperty] private bool defaultExportPlaintext = true;
+        [ObservableProperty] private bool includeAssemblyLineInPatchInfo = false;
 
         private TemplateFile _selectedTemplateFile;
         public TemplateFile SelectedTemplateFile

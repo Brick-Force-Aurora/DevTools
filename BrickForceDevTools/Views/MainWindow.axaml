@@ -127,6 +127,44 @@
 					</Grid>
 				</Grid>
 			</TabItem>
+		<TabItem Header="Patch Builder">
+		    <StackPanel Margin="12" Spacing="10">
+		
+		        <TextBlock Text="{Binding PatchBuilder.Summary}" />
+		
+		        <StackPanel Orientation="Horizontal" Spacing="8">
+		            <Button Content="Select Folder A then B" Click="OnSelectFoldersForPatchClick"/>
+		            <Button x:Name="BtnBuildPatch" Content="Build Patch" Click="OnBuildPatchClick"
+		                    IsEnabled="{Binding PatchBuilder.CanBuildPatch}" />
+		        </StackPanel>
+		
+		        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+		            <TextBlock Grid.Row="0" Grid.Column="0" Text="Folder A:" Margin="0,0,8,0"/>
+		            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding PatchBuilder.FolderA}" />
+		
+		            <TextBlock Grid.Row="1" Grid.Column="0" Text="Folder B:" Margin="0,0,8,0"/>
+		            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PatchBuilder.FolderB}" />
+		
+		            <TextBlock Grid.Row="2" Grid.ColumnSpan="2" Text="Diff (B ? A):" Margin="0,8,0,0"/>
+		        </Grid>
+		
+		        <DataGrid ItemsSource="{Binding PatchBuilder.DiffItems}"
+		                  AutoGenerateColumns="False"
+		                  IsReadOnly="True"
+		                  Height="340">
+		            <DataGrid.Columns>
+		                <DataGridTextColumn Header="Base" Binding="{Binding BaseName}" Width="1.5*"/>
+		                <DataGridTextColumn Header="MapName" Binding="{Binding MapName}" Width="2*"/>
+		                <DataGridTextColumn Header="Creator" Binding="{Binding Creator}" Width="2*"/>
+		                <DataGridCheckBoxColumn Header=".geometry" Binding="{Binding HasGeometry}" Width="*"/>
+		                <DataGridTextColumn Header="RegMap" Binding="{Binding RegMapFile}" Width="2*"/>
+		                <DataGridTextColumn Header="Geometry" Binding="{Binding GeometryFile}" Width="2*"/>
+		            </DataGrid.Columns>
+		        </DataGrid>
+		
+		    </StackPanel>
+		</TabItem>
+
 		<TabItem Header="Settings" VerticalContentAlignment="Center">
 			<Grid RowDefinitions="Auto, *" Margin="10">
 				<StackPanel Orientation="Horizontal" Spacing="5">
@@ -142,6 +180,7 @@
 					<CheckBox Content="Default Export JSON" IsChecked="{Binding DefaultExportJson}" />
 					<CheckBox Content="Default Export OBJ" IsChecked="{Binding DefaultExportObj}" />
 					<CheckBox Content="Default Export Plaintext" IsChecked="{Binding DefaultExportPlaintext}" />
+					<CheckBox Content="Include Assembly-CSharp.dll in patch info" IsChecked="{Binding IncludeAssemblyLineInPatchInfo}" />
 				</StackPanel>			
 			</Grid>
 		</TabItem>
