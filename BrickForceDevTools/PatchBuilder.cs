@@ -79,7 +79,7 @@ namespace BrickForceDevTools.Patch
             var infoLines = new List<string>();
             if (Global.IncludeAssemblyLineInPatchInfo)
             {
-                infoLines.Add("Assembly-CSharp.dll=/BrickForce_Data/Managed/");
+                infoLines.Add("Assembly-CSharp.dll=BrickForce_Data/Managed/");
             }
 
             int copiedMaps = 0;
@@ -92,7 +92,7 @@ namespace BrickForceDevTools.Patch
                 copiedFiles++;
 
                 changelogLines.Add($"{d.MapName} by {d.Creator}");
-                infoLines.Add($"{Path.GetFileName(outReg)}=/BrickForce_Data/Resources/Cache");
+                infoLines.Add($"{Path.GetFileName(outReg)}=BrickForce_Data/Resources/Cache/");
 
                 if (d.HasGeometry)
                 {
@@ -100,7 +100,7 @@ namespace BrickForceDevTools.Patch
                     File.Copy(d.GeometryPath, outGeo, overwrite: true);
                     copiedFiles++;
 
-                    infoLines.Add($"{Path.GetFileName(outGeo)}=/BrickForce_Data/Resources/Cache");
+                    infoLines.Add($"{Path.GetFileName(outGeo)}=BrickForce_Data/Resources/Cache/");
                 }
 
                 copiedMaps++;
