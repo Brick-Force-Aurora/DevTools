@@ -13,6 +13,8 @@ namespace BrickForceDevTools.ViewModels
         private static RegMapsViewModel _instance;
         public static RegMapsViewModel Instance => _instance ??= new RegMapsViewModel();
 
+        public ObservableCollection<ModeToggleItem> ModeToggles { get; } = new();
+
         private ObservableCollection<RegMap> _regMaps = new ObservableCollection<RegMap>();
         public ObservableCollection<RegMap> RegMaps
         {
@@ -105,6 +107,16 @@ namespace BrickForceDevTools.ViewModels
             set => SetProperty(ref _isClan, value);
         }
 
-        private RegMapsViewModel() { }
+        private RegMapsViewModel() {
+            ModeToggles.Add(new ModeToggleItem { Name = "Team", Bit = (ushort)MODE_MASK.TEAM_MATCH_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_teamMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Individual", Bit = (ushort)MODE_MASK.INDIVIDUAL_MATCH_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_survivalMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "CTF", Bit = (ushort)MODE_MASK.CAPTURE_THE_FALG_MATCH, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_ctfMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Blast", Bit = (ushort)MODE_MASK.EXPLOSION_MATCH, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_blastMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Mission", Bit = (ushort)MODE_MASK.MISSION_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_defenceMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "BND", Bit = (ushort)MODE_MASK.BND_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_BND.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Bungee", Bit = (ushort)MODE_MASK.BUNGEE_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_bungeeMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Escape", Bit = (ushort)MODE_MASK.ESCAPE_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_runMode.png") });
+            ModeToggles.Add(new ModeToggleItem { Name = "Zombie", Bit = (ushort)MODE_MASK.ZOMBIE_MASK, Icon = ModeIconDecoder.GetBitmap("avares://BrickForceDevTools/Assets/Modes/icon_zombieMode.png") });
+        }
     }
 }

@@ -27,6 +27,7 @@ namespace BrickForceDevTools.ViewModels
                 if (SetProperty(ref _selectedRegMap, value))
                 {
                     UpdateMapDetails(value);
+                    UpdateModeTogglesFromSelected();
                 }
             }
         }
@@ -46,6 +47,23 @@ namespace BrickForceDevTools.ViewModels
                 RegMapsViewModel.Thumbnail = selectedRegMap.thumbnail;
             }
         }
+
+        private void UpdateModeTogglesFromSelected()
+        {
+            if (_selectedRegMap == null)
+            {
+                foreach (var t in RegMapsViewModel.ModeToggles)
+                    t.IsActive = false;
+                return;
+            }
+
+            // IMPORTANT: replace ModeMask with the real property/field on your RegMap
+            ushort mask = _selectedRegMap.modeMask; // or .ModeMask
+
+            foreach (var t in RegMapsViewModel.ModeToggles)
+                t.IsActive = (mask & t.Bit) != 0;
+        }
+
 
         [ObservableProperty] private bool skipMissingGeometry = true;
         [ObservableProperty] private bool defaultExportAll = true;

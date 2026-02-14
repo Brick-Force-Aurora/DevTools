@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:views="clr-namespace:BrickForceDevTools.Views"
+		xmlns:conv="clr-namespace:BrickForceDevTools.Converters"
         mc:Ignorable="d" d:DesignWidth="1366" d:DesignHeight="768"
         x:Class="BrickForceDevTools.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -18,6 +19,9 @@
 			<Setter Property="Background" Value="#3b3b3b"/>
 		</Style>
 	</Window.Styles>
+	<Window.Resources>
+		<conv:BoolToOpacityConverter x:Key="BoolToOpacityConverter"/>
+	</Window.Resources>
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
@@ -72,7 +76,27 @@
 							<TextBox x:Name="TxtCreator" Watermark="Creator" Text="{Binding RegMapsViewModel.Creator}"/>
 							<TextBox x:Name="TxtDate" Watermark="Date" Text="{Binding RegMapsViewModel.Date}" IsReadOnly="True"/>
 							<TextBox x:Name="TxtBrickCount" Watermark="Brick Count" IsReadOnly="True" Text="{Binding RegMapsViewModel.BrickCount}"/>
-							<TextBox x:Name="TxtModes" Watermark="Modes" IsReadOnly="True" Text="{Binding RegMapsViewModel.Modes}"/>
+							<!-- Modes (icon toggles) -->
+							<ItemsControl ItemsSource="{Binding RegMapsViewModel.ModeToggles}">
+							    <ItemsControl.ItemsPanel>
+							        <ItemsPanelTemplate>
+							            <StackPanel Orientation="Horizontal" Spacing="6"/>
+							        </ItemsPanelTemplate>
+							    </ItemsControl.ItemsPanel>
+							
+							    <ItemsControl.ItemTemplate>
+							        <DataTemplate>
+							            <ToggleButton IsChecked="{Binding IsActive}"
+							                          ToolTip.Tip="{Binding Name}"
+							                          Width="42" Height="28"
+							                          Padding="0">
+							                <Image Width="42" Height="24"
+							                       Source="{Binding Icon}"
+							                       Opacity="{Binding IsActive, Converter={StaticResource BoolToOpacityConverter}}"/>
+							            </ToggleButton>
+							        </DataTemplate>
+							    </ItemsControl.ItemTemplate>
+							</ItemsControl>
 							<CheckBox x:Name="ChkOfficial" Content="Official" IsChecked="{Binding RegMapsViewModel.IsOfficial}"/>
 							<CheckBox x:Name="ChkClan" Content="Clan" IsChecked="{Binding RegMapsViewModel.IsClan}"/>
 						</StackPanel>
