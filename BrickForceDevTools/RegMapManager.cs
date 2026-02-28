@@ -58,6 +58,7 @@ namespace BrickForceDevTools
                     {
                         array[i] = binaryReader.ReadByte();
                     }
+                    regMap.thumbnailArray = array;
 
                     using (var memoryStream = new MemoryStream(array))
                     {

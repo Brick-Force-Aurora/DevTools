@@ -10,6 +10,7 @@ using System;
 using Avalonia.Controls.Shapes;
 using System.Threading.Tasks;
 using Avalonia.Threading;
+using System.Xml.Linq;
 
 namespace BrickForceDevTools.Views;
 
@@ -31,12 +32,14 @@ public partial class ExportDialog : Window
         DataContext = _viewModel;
     }
 
-    private string CreateExportDirectory(string name, int id)
+    private string CreateExportDirectory(string baseDir, string name, int id)
     {
-        Directory.CreateDirectory("Export");
-        string path = "Export\\" + name + "-" + id;
+        Directory.CreateDirectory(baseDir);
+
+        string path = System.IO.Path.Combine(baseDir, $"{name}-{id}");
         Directory.CreateDirectory(path);
-        Directory.CreateDirectory(path + "\\OBJ");
+        Directory.CreateDirectory(System.IO.Path.Combine(path, "OBJ"));
+
         return path;
     }
 
@@ -110,7 +113,7 @@ public partial class ExportDialog : Window
                             json = FixJSONFormat(json);
                             string exportString = "{\"MapData\":{" + mapHeader + "," + json;
                             string name = FilterPathName(map.alias);
-                            string path = CreateExportDirectory(name, map.map);
+                            string path = CreateExportDirectory(Global.DefaultExportLocation, name, map.map);
                             File.WriteAllText(path + "\\" + name + ".json", exportString);
                             try
                             {
@@ -125,7 +128,6 @@ public partial class ExportDialog : Window
                             }
 
                             Global.PrintLine("Path: " + path);
-                            Global.PrintLine("Json Exported!");
                         }
 
                         if (_viewModel.ExportObj)
@@ -134,7 +136,7 @@ public partial class ExportDialog : Window
                             string name = FilterPathName(map.alias);
                             int id = map.map;
 
-                            string path = CreateExportDirectory(name, id);
+                            string path = CreateExportDirectory(Global.DefaultExportLocation, name, id);
 
                             //save textures
                             Global.Print("Saved textures: [");
@@ -160,8 +162,6 @@ public partial class ExportDialog : Window
 
                             Global.PrintLine("Path: " + path);
 
-                            Global.PrintLine("OBJ Exported!");
-
                             //clean up
                             GC.Collect();
                             ObjParser.referencedTextures.Clear();
@@ -170,23 +170,31 @@ public partial class ExportDialog : Window
 
                         if (_viewModel.ExportRegMap)
                         {
+                            string path = CreateExportDirectory(Global.DefaultExportLocation, map.alias, map.map);
+                            if (map.Save(System.IO.Path.Combine(path, "downloaded" + map.map + ".regmap")))
+                            {
+                                Global.PrintLine("Saved downloaded" + map.map + ".regmap");
+                            }
+                            else
+                            {
+                                Global.PrintLine("Failed to save downloaded" + map.map + ".regmap");
+                            }
                         }
 
                         if (_viewModel.ExportGeometry)
                         {
+                            Global.PrintLine("Exporting Geometry is currently not supported.");
                         }
 
                         if (_viewModel.Plaintext)
                         {
                             string plaintext = Converter.RegMapToPlaintext(map);
                             string name = FilterPathName(map.alias);
-                            string path = CreateExportDirectory(name, map.map);
+                            string path = CreateExportDirectory(Global.DefaultExportLocation, name, map.map);
                             File.WriteAllText(path + "\\" + name + ".txt", plaintext);
                             Global.PrintLine("Saved " + name + ".txt");
 
                             Global.PrintLine("Path: " + path);
-
-                            Global.PrintLine("Plaintext Exported!");
 
                         }
                     }

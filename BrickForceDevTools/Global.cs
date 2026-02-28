@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
+using System.IO;
 
 namespace BrickForceDevTools
 {
@@ -17,6 +18,7 @@ namespace BrickForceDevTools
         public static bool DefaultExportObj = true;
         public static bool DefaultExportPlaintext = true;
         public static bool IncludeAssemblyLineInPatchInfo = false;
+        public static string DefaultExportLocation = Path.GetFullPath("Export");
 
         private static int _regMapCount;
         public static int RegMapCount => Volatile.Read(ref _regMapCount);

@@ -33,11 +33,11 @@ namespace BrickForceDevTools.Views
         private readonly PatchBuilderViewModel _patchVm = PatchBuilderViewModel.Instance;
         private System.Collections.Generic.List<PatchBuilder.DiffEntry> _currentDiff = new();
 
-        public MainWindow()
+        public MainWindow(MainWindowViewModel vm)
         {
             InitializeComponent();
             Global.MainWindowInstance = this;
-            _viewModel = new MainWindowViewModel();
+            _viewModel = vm;
             DataContext = _viewModel;
             if (File.Exists(".\\Assets\\bricks.json"))
             {
@@ -63,48 +63,70 @@ namespace BrickForceDevTools.Views
             TxtRegMapCount.Text = $"Loaded: {Global.RegMapCount}";
         }
 
+        public class AppSettings
+        {
+            public bool SkipMissingGeometry { get; set; } = true;
+            public bool DefaultExportAll { get; set; } = false;
+            public bool DefaultExportRegMap { get; set; } = true;
+            public bool DefaultExportGeometry { get; set; } = true;
+            public bool DefaultExportJson { get; set; } = true;
+            public bool DefaultExportObj { get; set; } = true;
+            public bool DefaultExportPlaintext { get; set; } = true;
+            public bool IncludeAssemblyLineInPatchInfo { get; set; } = false;
+            public string DefaultExportLocation { get; set; } = Path.GetFullPath("Export");
+        }
+
         private void LoadSettings()
         {
             try
             {
+                AppSettings settings;
+
                 if (File.Exists(Global.settingsFilePath))
                 {
-                    string json = File.ReadAllText(Global.settingsFilePath);
-                    var settings = System.Text.Json.JsonSerializer.Deserialize<MainWindowViewModel>(json);
+                    var json = File.ReadAllText(Global.settingsFilePath);
+                    settings = System.Text.Json.JsonSerializer.Deserialize<AppSettings>(json)
+                               ?? new AppSettings();
 
-                    if (settings != null)
-                    {
-                        Global.SkipMissingGeometry = settings.SkipMissingGeometry;
-                        Global.DefaultExportAll = settings.DefaultExportAll;
-                        Global.DefaultExportRegMap = settings.DefaultExportRegMap;
-                        Global.DefaultExportGeometry = settings.DefaultExportGeometry;
-                        Global.DefaultExportJson = settings.DefaultExportJson;
-                        Global.DefaultExportObj = settings.DefaultExportObj;
-                        Global.DefaultExportPlaintext = settings.DefaultExportPlaintext;
-
-                        Global.PrintLine("Loaded Settings from File.");
-                    }
+                    Global.PrintLine("Loaded Settings from File.");
                 }
                 else
                 {
-                    Global.SkipMissingGeometry = true;
-                    Global.DefaultExportAll = true;
-                    Global.DefaultExportRegMap = true;
-                    Global.DefaultExportGeometry = true;
-                    Global.DefaultExportJson = true;
-                    Global.DefaultExportObj = true;
-                    Global.DefaultExportPlaintext = true;
+                    settings = new AppSettings
+                    {
+                        DefaultExportLocation = Path.GetFullPath("Export")
+                    };
 
                     Global.PrintLine("Initialized default settings.");
                 }
 
-                _viewModel.SkipMissingGeometry = Global.SkipMissingGeometry;
-                _viewModel.DefaultExportAll = Global.DefaultExportAll;
-                _viewModel.DefaultExportRegMap = Global.DefaultExportRegMap;
-                _viewModel.DefaultExportGeometry = Global.DefaultExportGeometry;
-                _viewModel.DefaultExportJson = Global.DefaultExportJson;
-                _viewModel.DefaultExportObj = Global.DefaultExportObj;
-                _viewModel.DefaultExportPlaintext = Global.DefaultExportPlaintext;
+                // Normalize path to full path
+                if (string.IsNullOrWhiteSpace(settings.DefaultExportLocation))
+                    settings.DefaultExportLocation = Path.GetFullPath("Export");
+                else
+                    settings.DefaultExportLocation = Path.GetFullPath(settings.DefaultExportLocation);
+
+                // Update Global
+                Global.SkipMissingGeometry = settings.SkipMissingGeometry;
+                Global.DefaultExportAll = settings.DefaultExportAll;
+                Global.DefaultExportRegMap = settings.DefaultExportRegMap;
+                Global.DefaultExportGeometry = settings.DefaultExportGeometry;
+                Global.DefaultExportJson = settings.DefaultExportJson;
+                Global.DefaultExportObj = settings.DefaultExportObj;
+                Global.DefaultExportPlaintext = settings.DefaultExportPlaintext;
+                Global.IncludeAssemblyLineInPatchInfo = settings.IncludeAssemblyLineInPatchInfo;
+                Global.DefaultExportLocation = settings.DefaultExportLocation;
+
+                // Update the *actual* bound VM
+                _viewModel.SkipMissingGeometry = settings.SkipMissingGeometry;
+                _viewModel.DefaultExportAll = settings.DefaultExportAll;
+                _viewModel.DefaultExportRegMap = settings.DefaultExportRegMap;
+                _viewModel.DefaultExportGeometry = settings.DefaultExportGeometry;
+                _viewModel.DefaultExportJson = settings.DefaultExportJson;
+                _viewModel.DefaultExportObj = settings.DefaultExportObj;
+                _viewModel.DefaultExportPlaintext = settings.DefaultExportPlaintext;
+                _viewModel.IncludeAssemblyLineInPatchInfo = settings.IncludeAssemblyLineInPatchInfo;
+                _viewModel.DefaultExportLocation = settings.DefaultExportLocation;
             }
             catch (Exception ex)
             {
@@ -246,17 +268,45 @@ namespace BrickForceDevTools.Views
         {
             try
             {
-                string json = System.Text.Json.JsonSerializer.Serialize(_viewModel, new JsonSerializerOptions { WriteIndented = true });
+                // normalize export path to full path
+                var exportPath = string.IsNullOrWhiteSpace(_viewModel.DefaultExportLocation)
+                    ? Path.GetFullPath("Export")
+                    : Path.GetFullPath(_viewModel.DefaultExportLocation);
+
+                // build settings snapshot (DTO)
+                var settings = new AppSettings
+                {
+                    SkipMissingGeometry = _viewModel.SkipMissingGeometry,
+                    DefaultExportAll = _viewModel.DefaultExportAll,
+                    DefaultExportRegMap = _viewModel.DefaultExportRegMap,
+                    DefaultExportGeometry = _viewModel.DefaultExportGeometry,
+                    DefaultExportJson = _viewModel.DefaultExportJson,
+                    DefaultExportObj = _viewModel.DefaultExportObj,
+                    DefaultExportPlaintext = _viewModel.DefaultExportPlaintext,
+                    IncludeAssemblyLineInPatchInfo = _viewModel.IncludeAssemblyLineInPatchInfo,
+                    DefaultExportLocation = exportPath
+                };
+
+                var json = System.Text.Json.JsonSerializer.Serialize(
+                    settings,
+                    new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+                );
+
                 File.WriteAllText(Global.settingsFilePath, json);
 
-                // Update global settings
-                Global.SkipMissingGeometry = _viewModel.SkipMissingGeometry;
-                Global.DefaultExportAll = _viewModel.DefaultExportAll;
-                Global.DefaultExportRegMap = _viewModel.DefaultExportRegMap;
-                Global.DefaultExportGeometry = _viewModel.DefaultExportGeometry;
-                Global.DefaultExportJson = _viewModel.DefaultExportJson;
-                Global.DefaultExportObj = _viewModel.DefaultExportObj;
-                Global.DefaultExportPlaintext = _viewModel.DefaultExportPlaintext;
+                // Update global settings too (keep app consistent immediately)
+                Global.SkipMissingGeometry = settings.SkipMissingGeometry;
+                Global.DefaultExportAll = settings.DefaultExportAll;
+                Global.DefaultExportRegMap = settings.DefaultExportRegMap;
+                Global.DefaultExportGeometry = settings.DefaultExportGeometry;
+                Global.DefaultExportJson = settings.DefaultExportJson;
+                Global.DefaultExportObj = settings.DefaultExportObj;
+                Global.DefaultExportPlaintext = settings.DefaultExportPlaintext;
+                Global.IncludeAssemblyLineInPatchInfo = settings.IncludeAssemblyLineInPatchInfo;
+                Global.DefaultExportLocation = settings.DefaultExportLocation;
+
+                // Also push normalized path back into VM so UI shows full path
+                _viewModel.DefaultExportLocation = settings.DefaultExportLocation;
 
                 Global.PrintLine("Settings saved successfully.");
             }

@@ -71,9 +71,9 @@
 
 						<!-- Middle: Input Fields -->
 						<StackPanel Grid.Column="1" Spacing="5" Margin="0,0,10,0">
-							<TextBox x:Name="TxtName" Watermark="Map Name" Text="{Binding RegMapsViewModel.MapName}"/>
-							<TextBox x:Name="TxtMapId" Watermark="Map ID" Text="{Binding RegMapsViewModel.MapId}"/>
-							<TextBox x:Name="TxtCreator" Watermark="Creator" Text="{Binding RegMapsViewModel.Creator}"/>
+							<TextBox x:Name="TxtName" Watermark="Map Name" Text="{Binding RegMapsViewModel.MapName, UpdateSourceTrigger=PropertyChanged}"/>
+							<TextBox x:Name="TxtMapId" Watermark="Map ID" Text="{Binding RegMapsViewModel.MapId, UpdateSourceTrigger=PropertyChanged}"/>
+							<TextBox x:Name="TxtCreator" Watermark="Creator" Text="{Binding RegMapsViewModel.Creator, UpdateSourceTrigger=PropertyChanged}"/>
 							<TextBox x:Name="TxtDate" Watermark="Date" Text="{Binding RegMapsViewModel.Date}" IsReadOnly="True"/>
 							<TextBox x:Name="TxtBrickCount" Watermark="Brick Count" IsReadOnly="True" Text="{Binding RegMapsViewModel.BrickCount}"/>
 							<!-- Modes (icon toggles) -->
@@ -205,6 +205,13 @@
 					<CheckBox Content="Default Export OBJ" IsChecked="{Binding DefaultExportObj}" />
 					<CheckBox Content="Default Export Plaintext" IsChecked="{Binding DefaultExportPlaintext}" />
 					<CheckBox Content="Include Assembly-CSharp.dll in patch info" IsChecked="{Binding IncludeAssemblyLineInPatchInfo}" />
+					<TextBlock Margin="0 5" >Default Export Location:</TextBlock>
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<TextBox Width="600"
+								 Watermark="Export Folder"
+								 Text="{Binding DefaultExportLocation, UpdateSourceTrigger=PropertyChanged}" />
+						<Button Content="Browse..." Command="{Binding BrowseExportLocationCommand}" />
+					</StackPanel>
 				</StackPanel>			
 			</Grid>
 		</TabItem>

@@ -37,11 +37,25 @@ namespace BrickForceDevTools.ViewModels
             }
         }
 
+        private RegMap? _selectedRegMap;
+        public RegMap? SelectedRegMap
+        {
+            get => _selectedRegMap;
+            set => SetProperty(ref _selectedRegMap, value);
+        }
+
         private string _mapName;
         public string MapName
         {
             get => _mapName;
-            set => SetProperty(ref _mapName, value);
+            set
+            {
+                if (SetProperty(ref _mapName, value))
+                {
+                    if (SelectedRegMap != null)
+                        SelectedRegMap.alias = value;
+                }
+            }
         }
 
         private bool _isSelected;
@@ -55,7 +69,14 @@ namespace BrickForceDevTools.ViewModels
         public string MapId
         {
             get => _mapId;
-            set => SetProperty(ref _mapId, value);
+            set
+            {
+                if (SetProperty(ref _mapId, value))
+                {
+                    if (SelectedRegMap != null && int.TryParse(value, out var id))
+                        SelectedRegMap.map = id;
+                }
+            }
         }
 
         private Avalonia.Media.Imaging.Bitmap _thumbnail;
@@ -69,7 +90,14 @@ namespace BrickForceDevTools.ViewModels
         public string Creator
         {
             get => _creator;
-            set => SetProperty(ref _creator, value);
+            set
+            {
+                if (SetProperty(ref _creator, value))
+                {
+                    if (SelectedRegMap != null)
+                        SelectedRegMap.developer = value;
+                }
+            }
         }
 
         private string _date;

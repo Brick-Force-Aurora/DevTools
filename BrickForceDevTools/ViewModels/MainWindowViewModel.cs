@@ -9,6 +9,8 @@ using Avalonia.Platform.Storage;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using System.Text;
+using CommunityToolkit.Mvvm.Input;
+using Newtonsoft.Json.Linq;
 
 namespace BrickForceDevTools.ViewModels
 {
@@ -26,6 +28,7 @@ namespace BrickForceDevTools.ViewModels
             {
                 if (SetProperty(ref _selectedRegMap, value))
                 {
+                    RegMapsViewModel.SelectedRegMap = value;
                     UpdateMapDetails(value);
                     UpdateModeTogglesFromSelected();
                 }
@@ -57,8 +60,7 @@ namespace BrickForceDevTools.ViewModels
                 return;
             }
 
-            // IMPORTANT: replace ModeMask with the real property/field on your RegMap
-            ushort mask = _selectedRegMap.modeMask; // or .ModeMask
+            ushort mask = _selectedRegMap.modeMask;
 
             foreach (var t in RegMapsViewModel.ModeToggles)
                 t.IsActive = (mask & t.Bit) != 0;
@@ -73,6 +75,49 @@ namespace BrickForceDevTools.ViewModels
         [ObservableProperty] private bool defaultExportObj = true;
         [ObservableProperty] private bool defaultExportPlaintext = true;
         [ObservableProperty] private bool includeAssemblyLineInPatchInfo = false;
+        [ObservableProperty] private string defaultExportLocation = Path.GetFullPath("Export");
+
+        partial void OnDefaultExportLocationChanged(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                value = "Export";
+
+            var full = Path.GetFullPath(value);
+
+            full = full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+            defaultExportLocation = full;
+            OnPropertyChanged(nameof(DefaultExportLocation));
+
+            Global.DefaultExportLocation = full;
+        }
+
+        [RelayCommand]
+        private async Task BrowseExportLocation()
+        {
+            // You already keep this around:
+            var window = Global.MainWindowInstance;
+            if (window == null) return;
+
+            var top = TopLevel.GetTopLevel(window);
+            if (top?.StorageProvider == null) return;
+
+            var folders = await top.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = "Select export folder",
+                AllowMultiple = false
+            });
+
+            var picked = folders?.FirstOrDefault();
+            if (picked == null) return;
+
+            // Convert to local file path
+            var path = picked.TryGetLocalPath();
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            // Setting this triggers OnDefaultExportLocationChanged -> normalizes + syncs Global
+            DefaultExportLocation = path;
+        }
 
         private TemplateFile _selectedTemplateFile;
         public TemplateFile SelectedTemplateFile
